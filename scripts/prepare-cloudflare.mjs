@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const databaseId=process.env.CLOUDFLARE_D1_DATABASE_ID;
+if (!databaseId || !/^[a-f0-9-]{36}$/i.test(databaseId)) throw new Error('Configure CLOUDFLARE_D1_DATABASE_ID com o ID do banco D1.');
+const built=path.resolve('dist/server');
+const config=JSON.parse(fs.readFileSync(path.join(built,'wrangler.json'),'utf8'));
+config.name='cristorei-informatica';
+config.main=path.join(built,config.main);
+config.assets={...config.assets,directory:path.resolve(built,config.assets.directory)};
+config.d1_databases=[{binding:'DB',database_name:'cristorei-informatica-db',database_id:databaseId,migrations_dir:path.resolve('drizzle')}];
+delete config.build; delete config.topLevelName;
+fs.mkdirSync('.deploy',{recursive:true});
+fs.writeFileSync('.deploy/wrangler.json',JSON.stringify(config,null,2));
+console.log('Configuração Cloudflare preparada.');
